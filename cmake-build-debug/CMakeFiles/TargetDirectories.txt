@@ -1,0 +1,3 @@
+/Users/tay/Documents/threadpool/cmake-build-debug/CMakeFiles/threadpool.dir
+/Users/tay/Documents/threadpool/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/tay/Documents/threadpool/cmake-build-debug/CMakeFiles/rebuild_cache.dir
