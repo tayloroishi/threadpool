@@ -1,25 +1,14 @@
 #include "worker_thread.h"
+WorkerThread::WorkerThread(IThreadHandler* handler, std::mutex * mutex, std::condition_variable * cv) : mHandler(handler), mMutex(mutex), mCV(cv) {}
 
-void WorkerThread::operator()()
+void WorkerThread::Run()
 {
-    std::unique_lock lock(mMutex);
-    try {
-        if (mWork)
-        {
-            (*mWork)();
-        }
+    while (!mHandler->Stopping())
+    {
+        std::unique_lock lock(*mMutex);
+        mCV->wait(lock, [handler=mHandler](){return handler->WorkReady();});
+        std::function<void()>* work = mHandler->GetWork();
+        lock.unlock();
+        (*work)();
     }
-    catch (const std::exception&)
-    {}
-
-    mReady = true;
-    mCV.wait(lock);
 }
-
-void WorkerThread::SetWork(std::function<void()> * const work) {
-    mReady = false;
-    mWork = work;
-    mCV.notify_one();
-}
-
-bool WorkerThread::Ready() { return mReady; }

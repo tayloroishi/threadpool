@@ -1,14 +1,15 @@
+#include "interfaces.h"
 #include <thread>
 
 class WorkerThread {
 public:
-    void operator()();
-    void SetWork(std::function<void()>*);
-    bool Ready();
+    WorkerThread(IThreadHandler*, std::mutex*, std::condition_variable*);
+    void Run();
 
 private:
-    std::mutex mMutex;
-    bool mReady = true;
-    std::condition_variable mCV;
-    std::function<void()>* mWork = nullptr;
+    IThreadHandler* mHandler;
+    std::mutex* mMutex;
+    std::condition_variable* mCV;
 };
+
+

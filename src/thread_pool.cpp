@@ -1,22 +1,45 @@
 #include "thread_pool.h"
 
-ThreadPool::ThreadPool(int numOfThreads) : mWorkerThreads(numOfThreads)
+using namespace std::chrono_literals;
+
+bool ThreadPool::WorkReady()
 {
+    return !mQueue.empty();
+}
+
+bool ThreadPool::Stopping()
+{
+    return mIsStopping;
+}
+
+std::function<void()>* ThreadPool::GetWork()
+{
+    auto* job = mQueue.back();
+    mQueue.pop();
+    return job;
+}
+
+ThreadPool::ThreadPool(int numOfThreads)
+{
+    for (auto i = 0; i < numOfThreads; i++)
+    {
+        mWorkerThreads.emplace_back(this, &mMutex, &mCV);
+    }
+
     for (auto& worker : mWorkerThreads)
     {
-        mThreads.emplace_back([&worker](){worker();});
+        mThreads.emplace_back([&worker](){worker.Run();});
     }
 }
 
 void ThreadPool::QueueJob(std::function<void()> * job)
 {
-    for (auto& worker : mWorkerThreads)
+    std::unique_lock lock(mMutex);
+    while (!lock.try_lock())
     {
-        if (worker.Ready())
-        {
-            worker.SetWork(job);
-            return;
-        }
+        std::this_thread::sleep_for(1ms);
     }
     mQueue.push(job);
+    lock.unlock();
+    mCV.notify_one();
 }
