@@ -35,10 +35,6 @@ ThreadPool::ThreadPool(int numOfThreads)
 void ThreadPool::QueueJob(std::function<void()> * job)
 {
     std::unique_lock lock(mMutex);
-    while (!lock.try_lock())
-    {
-        std::this_thread::sleep_for(1ms);
-    }
     mQueue.push(job);
     lock.unlock();
     mCV.notify_one();
